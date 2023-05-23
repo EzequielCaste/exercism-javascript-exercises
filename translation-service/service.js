@@ -1,5 +1,7 @@
 /// <reference path="./global.d.ts" />
 
+import { NotAvailable } from "./errors";
+
 
 // @ts-check
 //
@@ -29,7 +31,7 @@ export class TranslationService {
    * @returns {Promise<string>}
    */
   free(text) {
-    return this.api.fetch(text).then(e => e.translation)       
+    return this.api.fetch(text).then(e => e.translation)
   }
 
   /**
@@ -43,9 +45,17 @@ export class TranslationService {
    * @returns {Promise<string[]>}
    */
   batch(texts) {
-    texts.map(e => this.api.fetch(e).then(t => t.translation))
+    if (texts.length === 0) {
+      return Promise.reject(new BatchIsEmpty)
+    }
 
-    return Promise.all(texts)
+    const arrayOfPromises = []
+
+    texts.forEach(text => {
+      arrayOfPromises.push(this.api.fetch(text).then(t => t.translation))
+    })
+
+    return Promise.all(arrayOfPromises)
   }
 
   /**
@@ -58,7 +68,17 @@ export class TranslationService {
    * @returns {Promise<void>}
    */
   request(text) {
-    throw new Error('Implement the request function');
+
+    const myPromise = () => new Promise((resolve, reject) => {
+      this.api.request(text, (result) => {
+        result ? reject(result) : resolve();
+      })
+    })
+
+    return myPromise()
+      .catch(myPromise)
+      .catch(myPromise)
+
   }
 
   /**
@@ -72,7 +92,18 @@ export class TranslationService {
    * @returns {Promise<string>}
    */
   premium(text, minimumQuality) {
-    throw new Error('Implement the premium function');
+
+    return this.api.fetch(text)
+      .catch(() => {
+        return this.request(text).then(() => this.api.fetch(text))
+      })
+      .then((res) => {
+        if (res.quality < minimumQuality) {
+          throw new QualityThresholdNotMet(text)
+        }
+        return res.translation
+      })
+
   }
 }
 

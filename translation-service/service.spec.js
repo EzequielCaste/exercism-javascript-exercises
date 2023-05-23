@@ -93,7 +93,7 @@ describe('Batch service', () => {
   });
 });
 
-describe.skip('Request service', () => {
+describe('Request service', () => {
   /** @type {TranslationService} */
   let service;
 
@@ -138,7 +138,7 @@ describe.skip('Request service', () => {
   });
 });
 
-describe.skip('Premium service', () => {
+describe('Premium service', () => {
   /** @type {TranslationService} */
   let service;
 
